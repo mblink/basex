@@ -5,6 +5,7 @@
  :)
 module namespace dba = 'dba/databases';
 
+import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
 import module namespace util = 'dba/util' at '../lib/util.xqm';
 
@@ -43,6 +44,7 @@ function dba:database(
 ) as element() {
   if(not($name)) then web:redirect('databases') else
 
+  let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
   let $db-exists := db:exists($name)
   return html:wrap(
     map {
@@ -76,13 +78,13 @@ function dba:database(
                   'raw': if($res/@raw = 'true') then '✓' else '–',
                   'size': $res/@size
                 }
-              let $buttons := (
+              let $buttons := if ($admin) then (
                 html:button('db-add', 'Add…'),
                 html:button('db-delete', 'Delete', true()),
                 html:button('db-copy', 'Copy…', false()),
                 html:button('db-alter', 'Rename…', false()),
                 html:button('db-optimize', 'Optimize…', false(), map { 'class': 'global' })
-              )
+              ) else ()
               let $params := map { 'name': $name }
               let $options := map {
                 'sort': $sort,
@@ -113,13 +115,13 @@ function dba:database(
                   html:link('Download', 'backup/' || encode-for-uri($backup) || '.zip')
                 }
               }
-            let $buttons := (
+            let $buttons := if ($admin) then (
               html:button('backup-create', 'Create', false(), map { 'class': 'global' }) update (
                 if($db-exists) then () else insert node attribute disabled { '' } into .
               ),
               html:button('backup-restore', 'Restore', true()),
               html:button('backup-drop', 'Drop', true())
-            )
+            ) else ()
             let $params := map { 'name': $name }
             return html:table($headers, $entries, $buttons, $params, map { })
           }
@@ -128,22 +130,27 @@ function dba:database(
       <td class='vertical'/>
       <td>{
         if($resource) then (
-          <h3>{ $resource }</h3>,
-          <form action='resource' method='post' id='resources'>
-            <input type='hidden' name='name' value='{ $name }'/>
-            <input type='hidden' name='resource' value='{ $resource }' id='resource'/>
-            {
-              html:button('db-rename', 'Rename…'), ' ',
-              html:button('db-download', 'Download'), ' ',
-              html:button('db-replace', 'Replace…')
-            }
-          </form>,
-          <h4>Enter your query…</h4>,
-          <input style='width:100%' name='input' id='input' onkeyup='queryResource(false)'/>,
-          <div class='small'/>,
-          <textarea name='output' id='output' readonly='' spellcheck='false'/>,
-          html:focus('input'),
-          html:js('loadCodeMirror("xml", false); queryResource(true);')
+          let $buttons := if ($admin) then (
+            html:button('db-rename', 'Rename…'), ' ',
+            html:button('db-download', 'Download'), ' ',
+            html:button('db-replace', 'Replace…')
+          ) else (
+            html:button('db-download', 'Download')
+          )
+          return (
+            <h3>{ $resource }</h3>,
+            <form action='resource' method='post' id='resources'>
+              <input type='hidden' name='name' value='{ $name }'/>
+              <input type='hidden' name='resource' value='{ $resource }' id='resource'/>
+              {$buttons}
+            </form>,
+            <h4>Enter your query…</h4>,
+            <input style='width:100%' name='input' id='input' onkeyup='queryResource(false)'/>,
+            <div class='small'/>,
+            <textarea name='output' id='output' readonly='' spellcheck='false'/>,
+            html:focus('input'),
+            html:js('loadCodeMirror("xml", false); queryResource(true);')
+          )
         ) else if($db-exists) then (
           html:properties(db:info($name))
         ) else ()
