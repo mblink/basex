@@ -8,6 +8,30 @@ module namespace dba = 'dba/login';
 import module namespace config = 'dba/config' at 'lib/config.xqm';
 import module namespace html = 'dba/html' at 'lib/html.xqm';
 
+declare %private function dba:read-only-ok() as xs:boolean {
+  let $path := request:path()
+  let $method := request:method()
+  return (
+    (: Base and authentication routes :)
+    if ($path = '/dba' and $method = 'GET') then (true())
+    else if ($path = '/dba/logout' and $method = 'GET') then (true())
+    (: DB read operations :)
+    else if ($path = '/dba/db-download' and $method = 'POST') then (true())
+    else if ($path = '/dba/db-query' and $method = 'POST') then (true())
+    else if ($path = '/dba/database' and $method = 'GET') then (true())
+    else if ($path = '/dba/databases' and $method = 'GET') then (true())
+    else if ($path = '/dba/queries' and $method = 'GET') then (true())
+    else if ($path = '/dba/query-eval' and $method = 'POST') then (true())
+    (: Jobs routes :)
+    else if ($path = '/dba/jobs' and $method = 'GET') then (true())
+    (: Logs routes :)
+    else if ($path = '/dba/log' and $method = 'POST') then (true())
+    else if ($path = '/dba/logs' and $method = 'GET') then (true())
+    else if ($path = '/dba/log-download' and $method = 'POST') then (true())
+    else (false())
+  )
+};
+
 (:~
  : Permissions: checks the user credentials.
  : Redirects to the login page if a user is not logged in, or if the page is not public.
@@ -21,11 +45,15 @@ function dba:check(
 ) as element(rest:response)? {
   let $path := $perm?path
   let $allow := $perm?allow
+  let $user := session:get($config:SESSION-KEY)
+  let $user-perm := user:list-details($user)/@permission
   return if ($allow = 'public') then (
     (: public function, register id for better log entries :)
     request:set-attribute('id', $allow)
-  ) else if (session:get($config:SESSION-KEY)) then (
-    (: everything fine, user is logged in :)
+  ) else if ($user) then (
+    if ($user-perm = 'admin') then ()
+    else if ($user-perm = 'read' and dba:read-only-ok()) then ()
+    else (web:error(403, 'This action can only be performed by an admin'))
   ) else (
     (: normalize login path :)
     let $target := if(ends-with($path, '/dba')) then 'dba/login' else 'login'
@@ -112,11 +140,7 @@ function dba:login-check(
 ) as element(rest:response) {
   try {
     user:check($name, $pass),
-    if(user:list-details($name)/@permission != 'admin') then (
-      dba:reject($name, 'Admin credentials required', $page)
-    ) else (
-      dba:accept($name, $page)
-    )
+    dba:accept($name, $page)
   } catch user:* {
     dba:reject($name, 'Please check your login data', $page)
   }
