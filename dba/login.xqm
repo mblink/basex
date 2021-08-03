@@ -46,7 +46,7 @@ function dba:check(
   let $path := $perm?path
   let $allow := $perm?allow
   let $user := session:get($config:SESSION-KEY)
-  let $user-perm := user:list-details($user)/@permission
+  let $user-perm := if ($user) then (user:list-details($user)/@permission) else ()
   return if ($allow = 'public') then (
     (: public function, register id for better log entries :)
     request:set-attribute('id', $allow)
