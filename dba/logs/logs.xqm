@@ -5,6 +5,7 @@
  :)
 module namespace dba = 'dba/logs';
 
+import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
 import module namespace options = 'dba/options' at '../lib/options.xqm';
 
@@ -72,6 +73,7 @@ function dba:logs(
   $page   as xs:string,
   $time   as xs:string?
 ) as element(html) {
+  let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
   let $files := (
     for $file in admin:logs()
     order by $file descending
@@ -88,7 +90,7 @@ function dba:logs(
           <input type='hidden' name='page' id='page' value='{ $page }'/>
           <input type='hidden' name='time' id='time' value='{ $time }'/>
           <div id='list'>{
-            let $buttons := html:button('log-delete', 'Delete', true())
+            let $buttons := if ($admin) then (html:button('log-delete', 'Delete', true())) else ()
             let $headers := (
               map { 'key': 'name', 'label': 'Name', 'type': 'dynamic' },
               map { 'key': 'size', 'label': 'Size', 'type': 'bytes' }
