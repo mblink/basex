@@ -5,6 +5,7 @@
  :)
 module namespace dba = 'dba/jobs';
 
+import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
 import module namespace util = 'dba/util' at '../lib/util.xqm';
 
@@ -39,6 +40,7 @@ function dba:jobs(
         <form action='{ $dba:CAT }' method='post' class='update'>
         <h2>Jobs</h2>
         {
+          let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
           let $headers := (
             map { 'key': 'id', 'label': 'ID' },
             map { 'key': 'type', 'label': 'Type' },
@@ -66,9 +68,9 @@ function dba:jobs(
               'you': if($id = $curr) then '✓' else '–',
               'time': $details/@time
             }
-          let $buttons := (
+          let $buttons := if ($admin) then (
             html:button('job-stop', 'Stop', true())
-          )
+          ) else ()
           let $options := map { 'sort': $sort, 'presort': 'duration' }
           return html:table($headers, $entries, $buttons, map { }, $options) update {
             (: replace job ids with links :)
