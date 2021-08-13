@@ -15,6 +15,8 @@ declare %private function dba:read-only-ok() as xs:boolean {
     (: Base and authentication routes :)
     if ($path = '/dba' and $method = 'GET') then (true())
     else if ($path = '/dba/logout' and $method = 'GET') then (true())
+    (: Backup read operations :)
+    else if (starts-with($path, '/dba/backup/') and $method = 'GET') then (true())
     (: DB read operations :)
     else if ($path = '/dba/db-download' and $method = 'POST') then (true())
     else if ($path = '/dba/db-query' and $method = 'POST') then (true())
