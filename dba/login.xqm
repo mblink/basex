@@ -54,7 +54,7 @@ function dba:check(
     request:set-attribute('id', $allow)
   ) else if ($user) then (
     if ($user-perm = 'admin') then ()
-    else if ($user-perm = 'read' and dba:read-only-ok()) then ()
+    else if (not(empty($user)) and dba:read-only-ok()) then ()
     else (web:error(403, 'This action can only be performed by an admin'))
   ) else (
     (: normalize login path :)
