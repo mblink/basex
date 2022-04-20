@@ -1,7 +1,7 @@
 (:~
  : Queries page.
  :
- : @author Christian Grün, BaseX Team 2005-21, BSD License
+ : @author Christian Grün, BaseX Team 2005-22, BSD License
  :)
 module namespace dba = 'dba/queries';
 
@@ -35,7 +35,7 @@ function dba:queries(
       'header': $dba:CAT, 'info': $info, 'error': $error,
       'css': 'codemirror/lib/codemirror.css',
       'scripts': ('editor.js', 'codemirror/lib/codemirror.js',
-                  'codemirror/mode/xquery/xquery.js','codemirror/mode/xml/xml.js')
+                  'codemirror/mode/xquery/xquery.js', 'codemirror/mode/xml/xml.js')
     },
     <tr>
       <td width='50%'>

@@ -1,7 +1,7 @@
 (:~
  : Save query.
  :
- : @author Christian Grün, BaseX Team 2005-21, BSD License
+ : @author Christian Grün, BaseX Team 2005-22, BSD License
  :)
 module namespace dba = 'dba/queries';
 
@@ -20,12 +20,12 @@ declare
   %output:method('text')
 function dba:query-save(
   $name   as xs:string,
-  $query  as xs:string
+  $query  as xs:string?
 ) as xs:string {
   let $path := config:directory() || $name
   return (
     try {
-      prof:void(xquery:parse($query, map {
+      prof:void(xquery:parse(string($query), map {
         'plan': false(), 'pass': true(), 'base-uri': $path
       }))
     } catch * {

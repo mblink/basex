@@ -1,7 +1,7 @@
 (:~
  : Query resources.
  :
- : @author Christian Grün, BaseX Team 2005-21, BSD License
+ : @author Christian Grün, BaseX Team 2005-22, BSD License
  :)
 module namespace dba = 'dba/databases';
 
@@ -24,7 +24,7 @@ declare
 function dba:db-query(
   $name      as xs:string,
   $resource  as xs:string,
-  $query     as xs:string
+  $query     as xs:string?
 ) as xs:string {
   util:query(if($query) then $query else '.', db:open($name, $resource))
 };

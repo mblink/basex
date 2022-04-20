@@ -1,7 +1,7 @@
 (:~
  : Logging page.
  :
- : @author Christian Grün, BaseX Team 2005-21, BSD License
+ : @author Christian Grün, BaseX Team 2005-22, BSD License
  :)
 module namespace dba = 'dba/logs';
 
@@ -74,11 +74,7 @@ function dba:logs(
   $time   as xs:string?
 ) as element(html) {
   let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
-  let $files := (
-    for $file in admin:logs()
-    order by $file descending
-    return $file
-  )
+  let $files := reverse(sort(admin:logs()))
   let $name := if($name) then $name else string(head($files))
   return html:wrap(map { 'header': $dba:CAT, 'info': $info, 'error': $error },
     <tr>
@@ -96,7 +92,7 @@ function dba:logs(
               map { 'key': 'size', 'label': 'Size', 'type': 'bytes' }
             )
             let $entries := 
-              for $entry in reverse(sort($files))
+              for $entry in $files
               return map {
                 'name': function() {
                   let $link := html:link(

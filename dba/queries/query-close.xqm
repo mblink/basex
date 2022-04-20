@@ -1,7 +1,7 @@
 (:~
  : Save query.
  :
- : @author Christian Grün, BaseX Team 2005-21, BSD License
+ : @author Christian Grün, BaseX Team 2005-22, BSD License
  :)
 module namespace dba = 'dba/queries';
 
@@ -16,7 +16,7 @@ declare
   %rest:path('/dba/query-close')
   %rest:query-param('name', '{$name}')
 function dba:query-save(
-  $name   as xs:string
+  $name  as xs:string
 ) as empty-sequence() {
   config:query('')
 };
