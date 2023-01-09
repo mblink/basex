@@ -5,6 +5,7 @@
  :)
 module namespace dba = 'dba/databases';
 
+import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
 import module namespace util = 'dba/util' at '../lib/util.xqm';
 
@@ -33,6 +34,7 @@ function dba:databases(
   $info   as xs:string?,
   $error  as xs:string?
 ) as element(html) {
+  let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
   let $names := map:merge(db:list() ! map:entry(., true()))
   let $databases :=
     let $start := util:start($page, $sort)
@@ -69,13 +71,13 @@ function dba:databases(
               map { 'key': 'date', 'label': 'Last Modified', 'type': 'dateTime', 'order': 'desc' }
             )
             let $entries := ($databases, $backups)
-            let $buttons := (
+            let $buttons := if ($admin) then (
               html:button('db-create', 'Create…'),
               html:button('db-optimize-all', 'Optimize'),
               html:button('db-drop', 'Drop', true()),
               html:button('backup-create-all', 'Back up'),
               html:button('backup-restore-all', 'Restore', true())
-            )
+            ) else ()
             let $count := map:size($names) + count($backups)
             let $options := map {
               'sort': $sort,

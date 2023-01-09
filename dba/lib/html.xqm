@@ -42,6 +42,7 @@ declare function html:wrap(
 ) as element(html) {
   let $header := head($options?header) ! util:capitalize(.)
   let $user := session:get($config:SESSION-KEY)
+  let $admin := if ($user) then (user:list-details($user)/@permission = 'admin') else false()
   return <html xml:space='preserve'>
     <head>
       <meta charset='utf-8'/>
@@ -75,8 +76,9 @@ declare function html:wrap(
                   <div class='ellipsis'>{
                     if($user) then (
                       let $cats := (
-                        for $cat in ('Logs', 'Databases', 'Queries', 'Files', 'Jobs',
-                          'Users', 'Sessions', 'Settings')
+                        for $cat in (if ($admin)
+                          then ('Logs', 'Databases', 'Queries', 'Files', 'Jobs', 'Users', 'Sessions', 'Settings')
+                          else ('Logs', 'Databases', 'Queries', 'Jobs'))
                         let $link := <a href='{ lower-case($cat) }'>{ $cat }</a>
                         return if($link = $header) then (
                           <b>{ $link }</b>
