@@ -1,6 +1,6 @@
 # basex-webapp
 
-This is a slightly tweaked version of the BaseX Database Admin web app. The current version is based on [BaseX v10.6](https://github.com/BaseXdb/basex/10.6/master/basex-api/src/main/webapp).
+This is a slightly tweaked version of the BaseX Database Admin web app. The current version is based on [BaseX v10.6](https://github.com/BaseXdb/basex/tree/10.6/basex-api/src/main/webapp).
 
 ## Setup
 
