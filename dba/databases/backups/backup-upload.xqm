@@ -1,7 +1,7 @@
 (:~
  : Upload backups.
  :
- : @author Christian Grün, BaseX Team 2005-22, BSD License
+ : @author Christian Grün, BaseX Team 2005-23, BSD License
  :)
 module namespace dba = 'dba/files';
 
@@ -25,7 +25,6 @@ function dba:file-upload(
 ) as element(rest:response) {
   (: save files :)
   let $dir := db:option('dbpath') || '/'
-  let $dir := config:directory()
   return try {
     (: reject backups with invalid content :)
     map:for-each($files, function($file, $content) {
