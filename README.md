@@ -1,6 +1,6 @@
 # basex-webapp
 
-This is a slightly tweaked version of the BaseX Database Admin web app. The current version is based on [BaseX v9.7](https://github.com/BaseXdb/basex/9.7/master/basex-api/src/main/webapp).
+This is a slightly tweaked version of the BaseX Database Admin web app. The current version is based on [BaseX v10.6](https://github.com/BaseXdb/basex/10.6/master/basex-api/src/main/webapp).
 
 ## Setup
 
@@ -14,7 +14,8 @@ git remote add upstream git@github.com:BaseXdb/basex
 
 ## Updating
 
-To update to a newer version of BaseX, run the following commands:
+To update to a newer version of BaseX, find the branch named after the current latest version, e.g. `basex-10.6`,
+then run the following commands:
 
 ```bash
 # Checkout the upstream-master branch and pull to make sure it's up to date
@@ -38,8 +39,17 @@ git subtree split --prefix basex-api/src/main/webapp --onto upstream-webapp -b u
 git checkout upstream-webapp
 git push origin upstream-webapp
 
-# Checkout the webapp branch, merge upstream-webapp, and push to origin
-git checkout webapp
-git merge upstream-webapp # resolve conflicts and commit if necessary
-git push origin webapp
+# Replace with version from the latest branch
+currBranch='basex-10.6'
+# Replace with the version you're updating to
+updBranch='basex-10.7'
+
+git checkout "$currBranch"
+git pull origin "$currBranch"
+# Checkout a new branch with the updated version
+git checkout -b "$updBranch"
+# Merge upstream-webapp, resolve conflicts and commit if necessary
+git merge upstream-webapp
+# Push the new branch to origin
+git push origin "$updBranch"
 ```
