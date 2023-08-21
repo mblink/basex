@@ -20,7 +20,7 @@ then run the following commands:
 ```bash
 # Checkout the upstream-master branch and pull to make sure it's up to date
 git checkout upstream-master
-git pull
+git pull origin upstream-master
 
 # Fetch from the upstream remote
 git fetch upstream
