@@ -40,9 +40,9 @@ git checkout upstream-webapp
 git push origin upstream-webapp
 
 # Replace with version from the latest branch
-currBranch='basex-10.6'
+currBranch='webapp-10.6'
 # Replace with the version you're updating to
-updBranch='basex-10.7'
+updBranch='webapp-10.7'
 
 git checkout "$currBranch"
 git pull origin "$currBranch"
