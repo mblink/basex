@@ -3,6 +3,9 @@
 This is a slightly tweaked version of the BaseX Database Admin web app to allow acces to non-admin users.
 The current version is based on [BaseX v10.7](https://github.com/BaseXdb/basex/tree/10.7/basex-api/src/main/webapp).
 
+You can view the changes applied by looking at the diff between the `upstream-webapp` branch and a version-specific branch,
+e.g. https://github.com/mblink/basex-webapp/compare/upstream-webapp...webapp-10.7
+
 ## Setup
 
 To setup the repository for development and updating (more details below), run the following commands:
