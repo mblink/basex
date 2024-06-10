@@ -1,12 +1,12 @@
 (:~
  : Optimize databases.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../lib/html.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -24,6 +24,7 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/db-optimize')
   %rest:query-param('name',  '{$name}')
   %rest:query-param('all',   '{$all}')
@@ -31,6 +32,7 @@ declare
   %rest:query-param('lang',  '{$lang}', 'en')
   %rest:query-param('error', '{$error}')
   %output:method('html')
+  %output:html-version('5')
 function dba:db-optimize(
   $name   as xs:string,
   $all    as xs:string?,
@@ -43,11 +45,11 @@ function dba:db-optimize(
   return html:wrap(map { 'header': ($dba:CAT, $name), 'error': $error },
     <tr>
       <td>
-        <form action='db-optimize' method='post'>
+        <form method='post' autocomplete='off'>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
             html:link($name, 'database', map { 'name': $name }), ' » ',
-            html:button('db-optimize', 'Optimize')
+            html:button('db-optimize-do', 'Optimize')
           }</h2>
           <!-- dummy value; prevents reset of options if nothing is selected -->
           <input type='hidden' name='opts' value='x'/>
@@ -71,8 +73,10 @@ function dba:db-optimize(
             </tr>
             <tr>
               <td>Language:</td>
-              <td><input type='text' name='lang' id='lang' value='{ $lang }'/></td>
-              { html:focus('lang') }
+              <td>
+                <input type='text' name='lang' value='{ $lang }' autofocus='autofocus'/>
+                <div class='small'/>
+              </td>
             </tr>
           </table>
         </form>
@@ -82,7 +86,7 @@ function dba:db-optimize(
 };
 
 (:~
- : Optimizes the current database.
+ : Optimizes a database.
  : @param  $name  database
  : @param  $all   optimize all
  : @param  $opts  database options
@@ -92,12 +96,12 @@ function dba:db-optimize(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/db-optimize')
+  %rest:path('/dba/db-optimize-do')
   %rest:form-param('name', '{$name}')
   %rest:form-param('all',  '{$all}')
   %rest:form-param('opts', '{$opts}')
   %rest:form-param('lang', '{$lang}')
-function dba:db-optimize(
+function dba:db-optimize-do(
   $name  as xs:string,
   $all   as xs:string?,
   $opts  as xs:string*,
@@ -109,9 +113,9 @@ function dba:db-optimize(
         map:entry(., $opts = .),
       $lang ! map:entry('language', .)
     ))),
-    util:redirect($dba:SUB, map { 'name': $name, 'info': 'Database was optimized.' })
+    utils:redirect($dba:SUB, map { 'name': $name, 'info': 'Database was optimized.' })
   } catch * {
-    util:redirect($dba:SUB, map {
+    utils:redirect($dba:SUB, map {
       'name': $name, 'opts': $opts, 'lang': $lang, 'error': $err:description
     })
   }
@@ -124,16 +128,15 @@ function dba:db-optimize(
  :)
 declare
   %updating
-  %rest:GET
-  %rest:path('/dba/db-optimize-all')
+  %rest:path('/dba/dbs-optimize')
   %rest:query-param('name', '{$names}')
-function dba:db-optimize-all(
+function dba:dbs-optimize(
   $names  as xs:string*
 ) as empty-sequence() {
   try {
     $names ! db:optimize(.),
-    util:redirect($dba:CAT, map { 'info': util:info($names, 'database', 'optimized') })
+    utils:redirect($dba:CAT, map { 'info': utils:info($names, 'database', 'optimized') })
   } catch * {
-    util:redirect($dba:CAT, map { 'error': $err:description })
+    utils:redirect($dba:CAT, map { 'error': $err:description })
   }
 };

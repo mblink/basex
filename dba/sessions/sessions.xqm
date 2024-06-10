@@ -1,13 +1,13 @@
 (:~
  : Sessions page.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/sessions';
 
 import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'sessions';
@@ -26,6 +26,7 @@ declare
   %rest:query-param('error', '{$error}')
   %rest:query-param('info',  '{$info}')
   %output:method('html')
+  %output:html-version('5')
 function dba:sessions(
   $sort   as xs:string,
   $error  as xs:string?,
@@ -34,7 +35,7 @@ function dba:sessions(
   html:wrap(map { 'header': $dba:CAT, 'info': $info, 'error': $error },
     <tr>
       <td>
-        <form action='{ $dba:CAT }' method='post' class='update'>
+        <form method='post'>
         <h2>Web Sessions</h2>
         {
           let $headers := (
@@ -55,7 +56,7 @@ function dba:sessions(
             } catch sessions:get {
               '–' (: non-XQuery session value :)
             }
-            let $string := util:chop(serialize($value, map { 'method': 'basex' }), 20)
+            let $string := utils:chop(serialize($value, map { 'method': 'basex' }), 20)
             order by $access descending
             return map {
               'id': $id || '|' || $name,
@@ -65,7 +66,7 @@ function dba:sessions(
               'you': $you
             }
           let $buttons := (
-            html:button('session-kill', 'Kill', true())
+            html:button('session-kill', 'Kill', ('CHECK', 'CONFIRM'))
           )
           let $options := map { 'sort': $sort, 'presort': 'access' }
           return html:table($headers, $entries, $buttons, map { }, $options)
@@ -89,25 +90,4 @@ function dba:sessions(
       </td>
     </tr>
   )
-};
-
-(:~
- : Redirects to the specified action.
- : @param  $action  action to perform
- : @param  $names   names of users
- : @param  $ids     ids
- : @return redirection
- :)
-declare
-  %rest:POST
-  %rest:path('/dba/sessions')
-  %rest:query-param('action', '{$action}')
-  %rest:query-param('name',   '{$names}')
-  %rest:query-param('id',     '{$ids}')
-function dba:users-redirect(
-  $action  as xs:string,
-  $names   as xs:string*,
-  $ids     as xs:string*
-) as element(rest:response) {
-  web:redirect($action, map { 'id': $ids })
 };

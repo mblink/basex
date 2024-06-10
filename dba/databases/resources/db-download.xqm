@@ -1,7 +1,7 @@
 (:~
  : Download resources.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
@@ -13,6 +13,7 @@ module namespace dba = 'dba/databases';
  : @return rest response and file content
  :)
 declare
+  %rest:POST
   %rest:path('/dba/db-download')
   %rest:query-param('name',     '{$name}')
   %rest:query-param('resource', '{$resource}')

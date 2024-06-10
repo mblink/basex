@@ -1,12 +1,12 @@
 (:~
  : Upload files.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/files';
 
 import module namespace config = 'dba/config' at '../lib/config.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'files';
@@ -24,21 +24,18 @@ function dba:file-upload(
   $files  as map(xs:string, xs:base64Binary)
 ) as element(rest:response) {
   (: save files :)
-  let $dir := config:directory()
+  let $dir := config:files-dir()
   return try {
     (: Parse all XQuery files; reject files that cannot be parsed :)
-    map:for-each($files, function($file, $content) {
-      if(matches($file, '\.xqm?$')) then (
-        prof:void(xquery:parse(
-          convert:binary-to-string($content),
-          map { 'plan': false(), 'pass': true(), 'base-uri': $dir || $file }
-        ))
-      ) else ()
+    map:for-each($files, fn($name, $content) {
+      if(matches($name, '\.xq(m|l|y|u|uery)?$')) then (
+        void(utils:query-parse(convert:binary-to-string($content), $dir || $name))
+      )
     }),
-    map:for-each($files, function($file, $content) {
-      file:write-binary($dir || $file, $content)
+    map:for-each($files, fn($name, $content) {
+      file:write-binary($dir || $name, $content)
     }),
-    web:redirect($dba:CAT, map { 'info': util:info(map:keys($files), 'file', 'uploaded') })
+    web:redirect($dba:CAT, map { 'info': utils:info(map:keys($files), 'file', 'uploaded') })
   } catch * {
     web:redirect($dba:CAT, map { 'error': 'Upload failed: ' || $err:description })
   }

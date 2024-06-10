@@ -1,11 +1,11 @@
 (:~
  : Restore backup.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
-import module namespace util = 'dba/util' at '../../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -20,7 +20,7 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %updating
-  %rest:GET
+  %rest:POST
   %rest:path('/dba/backup-restore')
   %rest:query-param('name',   '{$name}', '')
   %rest:query-param('backup', '{$backups}')
@@ -28,12 +28,15 @@ function dba:backup-restore(
   $name     as xs:string,
   $backups  as xs:string+
 ) as empty-sequence() {
-  let $target := $name ?? $dba:SUB !! $dba:CAT
+  let $target := if($name) then $dba:SUB else $dba:CAT
   return try {
     db:restore($name || '-' || head($backups)),
-    util:redirect($target, map { 'name': $name, 'info': util:info($backups, 'backup', 'restored') })
+    utils:redirect(
+      $target,
+      map { 'name': $name, 'info': utils:info($backups, 'backup', 'restored') }
+    )
   } catch * {
-    util:redirect($target, map { 'name': $name, 'error': $err:description })
+    utils:redirect($target, map { 'name': $name, 'error': $err:description })
   }
 };
 
@@ -44,16 +47,16 @@ function dba:backup-restore(
  :)
 declare
   %updating
-  %rest:GET
-  %rest:path('/dba/backup-restore-all')
+  %rest:POST
+  %rest:path('/dba/backups-restore')
   %rest:query-param('name', '{$names}')
-function dba:db-optimize-all(
+function dba:backups-restore(
   $names  as xs:string*
 ) as empty-sequence() {
   try {
     $names ! db:restore(.),
-    util:redirect($dba:CAT, map { 'info': util:info($names, 'backup', 'restored') })
+    utils:redirect($dba:CAT, map { 'info': utils:info($names, 'backup', 'restored') })
   } catch * {
-    util:redirect($dba:CAT, map { 'error': $err:description })
+    utils:redirect($dba:CAT, map { 'error': $err:description })
   }
 };

@@ -1,13 +1,12 @@
 (:~
  : HTML components.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace html = 'dba/html';
 
-import module namespace options = 'dba/options' at 'options.xqm';
 import module namespace config = 'dba/config' at 'config.xqm';
-import module namespace util = 'dba/util' at 'util.xqm';
+import module namespace utils = 'dba/utils' at 'utils.xqm';
 
 (: Number formats. :)
 declare variable $html:NUMBER := ('decimal', 'number', 'bytes');
@@ -29,8 +28,7 @@ declare function html:wrap(
  : <ul>
  :   <li><b>header</b>: page headers</li>
  :   <li><b>error</b>: error string</li>
- :   <li><b>css</b>: CSS files</li>
- :   <li><b>scripts</b>: JavaScript files</li>
+ :   <li><b>info</b>: info string</li>
  : </ul>
  : @param  $options  options
  : @param  $rows     tr elements
@@ -40,19 +38,24 @@ declare function html:wrap(
   $options  as map(*),
   $rows     as element(tr)+
 ) as element(html) {
-  let $header := head($options?header) ! util:capitalize(.)
+  let $header := head($options?header) ! utils:capitalize(.)
   let $user := session:get($config:SESSION-KEY)
   let $admin := if ($user) then (user:list-details($user)/@permission = 'admin') else false()
-  return <html xml:space='preserve'>
+  return <html>
     <head>
       <meta charset='utf-8'/>
       <title>DBA{ ($header, tail($options?header)) ! (' » ' || .) }</title>
       <meta name='description' content='Database Administration'/>
-      <meta name='author' content='BaseX Team 2005-23, BSD License'/>
+      <meta name='author' content='BaseX Team 2005-24, BSD License'/>
+      <meta name="robots" content="noindex"/>
+      <link rel='icon' href='static/basex.svg'/>
       <link rel='stylesheet' type='text/css' href='static/style.css'/>
-      { $options?css ! <link rel='stylesheet' type='text/css' href='static/{ . }'/> }
-      <script type='text/javascript' src='static/js.js'/>
-      { $options?scripts ! <script type='text/javascript' src='static/{ . }'/> }
+      <link rel='stylesheet' type='text/css' href='static/codemirror/codemirror.css'/>
+      <script src='static/js.js'/>
+      <script src='static/editor.js'/>
+      <script src='static/codemirror/codemirror.js'/>
+      <script src='static/codemirror/xquery.js'/>
+      <script src='static/codemirror/xml.js'/>
     </head>
     <body>
       <table cellpadding='0' cellspacing='0'>
@@ -66,7 +69,7 @@ declare function html:wrap(
                   </span>,
                   if($user) then (
                     <span style='float:right'>
-                      <b>{ $user }</b> (<a href='logout'>logout</a>)
+                      <b>{ $user }</b> · <a href='logout'>logout</a>
                     </span>
                   ) else ()
                 }</td>
@@ -77,8 +80,8 @@ declare function html:wrap(
                     if($user) then (
                       let $cats := (
                         for $cat in (if ($admin)
-                          then ('Logs', 'Databases', 'Queries', 'Files', 'Jobs', 'Users', 'Sessions', 'Settings')
-                          else ('Logs', 'Databases', 'Queries', 'Jobs'))
+                          then ('Logs', 'Databases', 'Editor', 'Files', 'Jobs', 'Users', 'Sessions', 'Settings')
+                          else ('Logs', 'Databases', 'Editor', 'Jobs'))
                         let $link := <a href='{ lower-case($cat) }'>{ $cat }</a>
                         return if($link = $header) then (
                           <b>{ $link }</b>
@@ -120,7 +123,7 @@ declare function html:wrap(
       </table>
       <table width='100%'>{ $rows }</table>
       <hr/>
-      <div class='right'><sup>BaseX Team 2005-23, BSD License</sup></div>
+      <div id='footer' class='right'><sup>BaseX Team 2005-24, BSD License</sup></div>
       <div class='small'/>
       { html:js('buttons();') }
     </body>
@@ -175,7 +178,7 @@ declare function html:checkbox(
 ) as node()+ {
   element input {
     attribute type { 'checkbox' },
-    map:for-each($map, function($key, $value) { attribute { $key } { $value } })
+    map:for-each($map, fn($key, $value) { attribute { $key } { $value } })
   },
   text { $label },
   element br { }
@@ -191,49 +194,27 @@ declare function html:button(
   $value  as xs:string,
   $label  as xs:string
 ) as element(button) {
-  html:button($value, $label, false())
+  html:button($value, $label, ())
 };
 
 (:~
  : Creates a button.
- : @param  $value    button value
+ : @param  $action   button action
  : @param  $label    label
- : @param  $confirm  confirm click
+ : @param  $options  options: 'CONFIRM' (show confirmation dialog), 'CHECK' (consider checkboxes)
  : @return button
  :)
 declare function html:button(
-  $value    as xs:string,
+  $action   as xs:string,
   $label    as xs:string,
-  $confirm  as xs:boolean
+  $options  as xs:string*
 ) as element(button) {
-  html:button($value, $label, $confirm, ())
-};
-
-(:~
- : Creates a button.
- : @param  $value    button value
- : @param  $label    label
- : @param  $confirm  confirm click
- : @param  $atts     additional attributes
- : @return button
- :)
-declare function html:button(
-  $value    as xs:string,
-  $label    as xs:string,
-  $confirm  as xs:boolean,
-  $atts     as map(xs:string, xs:string)?
-) as element(button) {
-  element button {
-    attribute name { 'action' },
-    attribute value { $value },
-    if($confirm) then (
-      attribute onclick { 'return confirm("Are you sure?");' }
-    ) else (),
-    if(exists($atts)) then (
-      map:for-each($atts, function($key, $value) { attribute { $key } { $value } })
-    ) else (),
+  <button>{
+    attribute formaction { $action }[$action],
+    attribute onclick { 'return confirm("Are you sure?");' }[$options = 'CONFIRM'],
+    attribute data-check { 'check' }[$options = 'CHECK'],
     $label
-  }
+  }</button>
 };
 
 (:~
@@ -319,7 +300,7 @@ declare function html:table(
   (: sort entries :)
   let $sort := $options?sort
   let $sorted-entries := (
-    let $key := head(($sort[.], $headers[1]?key))
+    let $key := head(($sort[.], head($headers)?key))
     return if(not($sort) or $key = $options?presort) then (
       $entries
     ) else (
@@ -329,16 +310,16 @@ declare function html:table(
         return switch($header?type)
           case 'decimal' case 'number' case 'bytes' return
             if($desc)
-            then function($v) { 0 - number($v) }
-            else function($v) { number($v) }
+            then fn { 0 - number() }
+            else fn { number() }
           case 'time' case 'dateTime' return
             if($desc)
-            then function($v) { xs:dateTime('0001-01-01T00:00:00Z') - xs:dateTime($v) }
-            else function($v) { $v }
+            then fn { xs:dateTime('0001-01-01T00:00:00Z') - xs:dateTime(.) }
+            else identity(?)
           case 'dynamic' return
-            function($v) { if($v instance of function(*)) then string-join($v()) else $v }
+            fn { if(. instance of function(*)) then string-join(.()) else . }
           default return
-            function($v) { $v }
+            identity(?)
       )
       for $entry in $entries
       order by $value($entry($key)) empty greatest collation '?lang=en'
@@ -347,11 +328,11 @@ declare function html:table(
   )
 
   (: show results :)
-  let $max-option := options:get($options:MAXROWS)
+  let $max-option := config:get($config:MAXROWS)
   let $count-option := $options?count[not($sort)]
   let $page-option := $options?page
 
-  let $entries := $count-option ?: count($sorted-entries)
+  let $entries := $count-option otherwise count($sorted-entries)
   let $last-page := ($entries - 1) idiv $max-option + 1
   let $curr-page := min((max(($page-option, 1)), $last-page))
   return (
@@ -374,7 +355,7 @@ declare function html:table(
         for $page at $pos in $pages
         let $suffix := (if($page = $last-page) then ')' else ' ') ||
           (if($pages[$pos + 1] > $page + 1) then ' … ' else ())
-        return if ($curr-page = $page) then (
+        return if($curr-page = $page) then (
           $page || $suffix
         ) else (
           html:link(string($page), '', ($params, map { 'page': $page, 'sort': $sort })),
@@ -463,18 +444,6 @@ declare function html:table(
 };
 
 (:~
- : Focuses the specified field via Javascript.
- : @param  $element  element to be focused
- : @return script element
- :)
-declare function html:focus(
-  $element  as xs:string
-) as element(script) {
-  html:js('var u = document.getElementById("' || replace($element, '"', '') || '"); ' ||
-    'u.focus(); u.select();')
-};
-
-(:~
  : Creates a link to the specified target.
  : @param  $text  link text
  : @param  $href  link reference
@@ -559,9 +528,7 @@ declare function html:duration(
 declare function html:js(
   $js  as xs:string
 ) as element(script) {
-  <script type='text/javascript'>{
-    '(function() { ' || $js || ' })();'
-  }</script>
+  <script>{ '(function() { ' || $js || ' })();' }</script>
 };
 
 (:~
@@ -586,7 +553,7 @@ declare function html:parameters(
 ) as map(*) {
   map:merge((
     html:parameters(),
-    map:for-each($map, function($name, $value) {
+    map:for-each($map, fn($name, $value) {
       map:entry('_' || $name, $value)
     })
   ))

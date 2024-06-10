@@ -1,12 +1,12 @@
 (:~
  : Create backup.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../../lib/html.xqm';
-import module namespace util = 'dba/util' at '../../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -20,28 +20,30 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/backup-create')
   %rest:query-param('name', '{$name}', '')
   %output:method('html')
+  %output:html-version('5')
 function dba:backup-create(
   $name  as xs:string
 ) as element(html) {
   html:wrap(map { 'header': ($dba:CAT, $name) },
     <tr>
       <td>
-        <form action='backup-create' method='post' autocomplete='off'>
+        <form method='post' autocomplete='off'>
           <input type='hidden' name='name' value='{ $name }'/>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
             (html:link($name, $dba:SUB, map { 'name': $name }), ' » ')[$name],
-            html:button('backup-create', 'Create Backup')
+            html:button('backup-create-do', 'Create Backup')
           }</h2>
           <table>
             <tr>
               <td>Comment:</td>
               <td>
-                <input type='text' name='comment' id='comment' size='64' placeholder='optional'/>
-                { html:focus('comment') }
+                <input type='text' name='comment' size='64' placeholder='optional'
+                  autofocus='autofocus'/>
               </td>
             </tr>
             <tr>
@@ -67,20 +69,20 @@ function dba:backup-create(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/backup-create')
+  %rest:path('/dba/backup-create-do')
   %rest:query-param('name',     '{$name}', '')
   %rest:query-param('comment',  '{$comment}')
   %rest:query-param('compress', '{$compress}')
-function dba:db-rename(
+function dba:backup-create-do(
   $name      as xs:string,
   $comment   as xs:string,
   $compress  as xs:string?
 ) as empty-sequence() {
   try {
     db:create-backup($name, map { 'comment': $comment, 'compress': boolean($compress) }),
-    util:redirect($dba:SUB, map { 'name': $name, 'info': 'Backup was created.' })
+    utils:redirect($dba:SUB, map { 'name': $name, 'info': 'Backup was created.' })
   } catch * {
-    util:redirect($dba:SUB, map { 'name': $name, 'error': $err:description })
+    utils:redirect($dba:SUB, map { 'name': $name, 'error': $err:description })
   }
 };
 
@@ -91,16 +93,16 @@ function dba:db-rename(
  :)
 declare
   %updating
-  %rest:GET
-  %rest:path('/dba/backup-create-all')
+  %rest:POST
+  %rest:path('/dba/backups-create')
   %rest:query-param('name', '{$names}')
-function dba:db-optimize-all(
+function dba:backups-create(
   $names  as xs:string*
 ) as empty-sequence() {
   try {
     $names ! db:create-backup(.),
-    util:redirect($dba:CAT, map { 'info': util:info($names, 'database', 'backed up') })
+    utils:redirect($dba:CAT, map { 'info': utils:info($names, 'database', 'backed up') })
   } catch * {
-    util:redirect($dba:CAT, map { 'error': $err:description })
+    utils:redirect($dba:CAT, map { 'error': $err:description })
   }
 };

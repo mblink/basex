@@ -1,7 +1,7 @@
 (:~
  : Downloads a job result.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/jobs';
 
@@ -14,7 +14,7 @@ declare variable $dba:CAT := 'jobs';
  : @return rest response and file content
  :)
 declare
-  %rest:GET
+  %rest:POST
   %rest:path('/dba/job-result')
   %rest:query-param('id', '{$id}', '')
 function dba:job-result(
@@ -31,7 +31,7 @@ function dba:job-result(
     } catch * {
       dba:job-result($id, false(),
         'Stopped at ' || $err:module || ', ' || $err:line-number || '/' ||
-          $err:column-number || ':' || string:nl() || $err:description
+          $err:column-number || ':' || char('\n') || $err:description
       )
     }
   )
@@ -39,9 +39,9 @@ function dba:job-result(
 
 (:~
  : Returns a job result.
- : @param $id      job id
- : @param $ok      ok flag
- : @param $result  job result
+ : @param  $id      job id
+ : @param  $ok      ok flag
+ : @param  $result  job result
  : @return rest response and file content
  :)
 declare %private function dba:job-result(

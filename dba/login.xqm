@@ -1,7 +1,7 @@
 (:~
  : Code for logging in and out.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/login';
 
@@ -52,7 +52,7 @@ function dba:check(
   let $allow := $perm?allow
   let $user := session:get($config:SESSION-KEY)
   let $user-perm := if ($user) then (user:list-details($user)/@permission) else ()
-  return if ($allow = 'public') then (
+  return if($allow = 'public') then (
     (: public function, register id for better log entries :)
     request:set-attribute('id', $allow)
   ) else if ($user) then (
@@ -81,6 +81,7 @@ declare
   %rest:query-param('_error', '{$error}')
   %rest:query-param('_page',  '{$page}')
   %output:method('html')
+  %output:html-version('5')
   %perm:allow('public')
 function dba:login(
   $name   as xs:string?,
@@ -93,10 +94,10 @@ function dba:login(
   html:wrap(map { 'error': $error },
     <tr>
       <td>
-        <form action='login-check' method='post'>
+        <form method='post'>
           <input type='hidden' name='_page' value='{ $page }'/>
           {
-            map:for-each(html:parameters(), function($key, $value) {
+            map:for-each(html:parameters(), fn($key, $value) {
               <input type='hidden' name='{ $key }' value='{ $value }'/>
             })
           }
@@ -105,8 +106,7 @@ function dba:login(
             <tr>
               <td><b>Name:</b></td>
               <td>
-                <input type='text' name='_name' value='{ $name }' id='user'/>
-                { html:focus('user') }
+                <input type='text' name='_name' value='{ $name }' autofocus='autofocus'/>
               </td>
             </tr>
             <tr>
@@ -114,7 +114,7 @@ function dba:login(
               <td>{
                 <input type='password' name='_pass'/>,
                 ' ',
-                <input type='submit' value='Login'/>
+                html:button('login-check', 'Login')
               }</td>
             </tr>
           </table>

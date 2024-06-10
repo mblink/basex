@@ -1,11 +1,11 @@
 (:~
  : Remove jobs.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/jobs';
 
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'jobs';
@@ -16,15 +16,15 @@ declare variable $dba:CAT := 'jobs';
  : @return redirection
  :)
 declare
-  %rest:GET
+  %rest:POST
   %rest:path('/dba/job-remove')
   %rest:query-param('id', '{$ids}')
-function dba:job-stop(
+function dba:job-remove(
   $ids  as xs:string*
 ) as element(rest:response) {
   let $params := try {
     $ids ! job:remove(.),
-    map { 'info': util:info($ids, 'job', 'removed') }
+    map { 'info': utils:info($ids, 'job', 'removed') }
   } catch * {
     map { 'error': $err:description }
   }

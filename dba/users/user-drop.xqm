@@ -1,11 +1,11 @@
 (:~
  : Drop users.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/users';
 
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'users';
@@ -17,7 +17,7 @@ declare variable $dba:CAT := 'users';
  :)
 declare
   %updating
-  %rest:GET
+  %rest:POST
   %rest:path('/dba/user-drop')
   %rest:query-param('name', '{$names}')
 function dba:user-drop(
@@ -25,8 +25,8 @@ function dba:user-drop(
 ) as empty-sequence() {
   try {
     $names ! user:drop(.),
-    util:redirect($dba:CAT, map { 'info': util:info($names, 'user', 'dropped') })
+    utils:redirect($dba:CAT, map { 'info': utils:info($names, 'user', 'dropped') })
   } catch * {
-    util:redirect($dba:CAT, map { 'error': $err:description })
+    utils:redirect($dba:CAT, map { 'error': $err:description })
   }
 };

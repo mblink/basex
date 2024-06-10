@@ -1,12 +1,12 @@
 (:~
  : Rename resource.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../../lib/html.xqm';
-import module namespace util = 'dba/util' at '../../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -23,12 +23,14 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/db-rename')
   %rest:query-param('name',     '{$name}')
   %rest:query-param('resource', '{$resource}')
   %rest:query-param('target',   '{$target}')
   %rest:query-param('error',    '{$error}')
   %output:method('html')
+  %output:html-version('5')
 function dba:db-rename(
   $name      as xs:string,
   $resource  as xs:string,
@@ -38,22 +40,21 @@ function dba:db-rename(
   html:wrap(map { 'header': ($dba:CAT, $name), 'error': $error },
     <tr>
       <td>
-        <form action='db-rename' method='post' autocomplete='off'>
+        <form method='post' autocomplete='off'>
           <input type='hidden' name='name' value='{ $name }'/>
           <input type='hidden' name='resource' value='{ $resource }'/>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
             html:link($name, $dba:SUB, map { 'name': $name }), ' » ',
             html:link($resource, $dba:SUB, map { 'name': $name, 'resource': $resource }), ' » ',
-            html:button('db-rename', 'Rename')
+            html:button('db-rename-do', 'Rename')
           }</h2>
           <table>
             <tr>
               <td>New path:</td>
               <td>
-                <input type='text' name='target' id='target'
-                       value='{ head(($target, $resource)) }'/>
-                { html:focus('target') }
+                <input type='text' name='target' value='{ $target otherwise $resource }'
+                  autofocus='autofocus'/>
                 <div class='small'/>
               </td>
             </tr>
@@ -74,11 +75,11 @@ function dba:db-rename(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/db-rename')
+  %rest:path('/dba/db-rename-do')
   %rest:query-param('name',     '{$name}')
   %rest:query-param('resource', '{$resource}')
   %rest:query-param('target',   '{$target}')
-function dba:db-rename(
+function dba:db-rename-do(
   $name      as xs:string,
   $resource  as xs:string,
   $target    as xs:string
@@ -88,12 +89,12 @@ function dba:db-rename(
       error((), 'Resource already exists.')
     ) else (
       db:rename($name, $resource, $target),
-      util:redirect($dba:SUB, map {
+      utils:redirect($dba:SUB, map {
         'name': $name, 'resource': $target, 'info': 'Resource was renamed.'
       })
     )
   } catch * {
-    util:redirect('db-rename', map {
+    utils:redirect('db-rename', map {
       'name': $name, 'resource': $resource, 'target': $target, 'error': $err:description
     })
   }

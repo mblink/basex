@@ -1,12 +1,12 @@
 (:~
  : Create new database.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../lib/html.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -23,12 +23,14 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/db-create')
   %rest:query-param('name',  '{$name}')
   %rest:query-param('opts',  '{$opts}')
   %rest:query-param('lang',  '{$lang}', 'en')
   %rest:query-param('error', '{$error}')
   %output:method('html')
+  %output:html-version('5')
 function dba:db-create(
   $name   as xs:string?,
   $opts   as xs:string*,
@@ -39,10 +41,10 @@ function dba:db-create(
   return html:wrap(map { 'header': $dba:CAT, 'error': $error },
     <tr>
       <td>
-        <form action='db-create' method='post' autocomplete='off'>
+        <form method='post' autocomplete='off'>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
-            html:button('create', 'Create')
+            html:button('db-create-do', 'Create')
           }</h2>
           <!-- dummy value; prevents reset of options when nothing is selected -->
           <input type='hidden' name='opts' value='x'/>
@@ -51,8 +53,7 @@ function dba:db-create(
               <td>Name:</td>
               <td>
                 <input type='hidden' name='opts' value='x'/>
-                <input type='text' name='name' value='{ $name }' id='name'/>
-                { html:focus('name') }
+                <input type='text' name='name' value='{ $name }' autofocus='autofocus'/>
                 <div class='small'/>
               </td>
             </tr>
@@ -75,7 +76,10 @@ function dba:db-create(
             </tr>
             <tr>
               <td>Language:</td>
-              <td><input type='text' name='language' value='{ $lang }'/></td>
+              <td>
+                <input type='text' name='language' value='{ $lang }'/>
+                <div class='small'/>
+              </td>
             </tr>
           </table>
         </form>
@@ -94,11 +98,11 @@ function dba:db-create(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/db-create')
+  %rest:path('/dba/db-create-do')
   %rest:query-param('name', '{$name}')
   %rest:query-param('opts', '{$opts}')
   %rest:query-param('lang', '{$lang}')
-function dba:db-create(
+function dba:db-create-do(
   $name  as xs:string,
   $opts  as xs:string*,
   $lang  as xs:string?
@@ -113,11 +117,12 @@ function dba:db-create(
         return map:entry($option, $opts = $option),
         $lang ! map:entry('language', .)))
       ),
-      util:redirect($dba:SUB, map { 'name': $name,
-        'info': 'Database "' || $name || '" was created.' })
+      utils:redirect($dba:SUB, map {
+        'name': $name, 'info': 'Database "' || $name || '" was created.'
+      })
     )
   } catch * {
-    util:redirect('db-create', map {
+    utils:redirect('db-create', map {
       'name': $name, 'opts': $opts, 'lang': $lang, 'error': $err:description
     })
   }

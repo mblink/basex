@@ -1,7 +1,7 @@
 (:~
  : Create directory.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/files';
 
@@ -22,6 +22,6 @@ declare
 function dba:dir-create(
   $name  as xs:string
 ) as element(rest:response) {
-  file:create-dir(config:directory() || $name),
+  file:create-dir(config:files-dir() || $name),
   web:redirect($dba:CAT, map { 'info': 'Directory "' || $name || '" was created.' })
 };

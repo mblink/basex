@@ -1,13 +1,13 @@
 (:~
  : Jobs page.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/jobs';
 
 import module namespace config = 'dba/config' at '../lib/config.xqm';
 import module namespace html = 'dba/html' at '../lib/html.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'jobs';
@@ -28,20 +28,17 @@ declare
   %rest:query-param('error', '{$error}')
   %rest:query-param('info',  '{$info}')
   %output:method('html')
+  %output:html-version('5')
 function dba:jobs(
   $sort   as xs:string,
   $job    as xs:string?,
   $error  as xs:string?,
   $info   as xs:string?
 ) as element(html) {
-  html:wrap(map {
-    'header': $dba:CAT, 'info': $info, 'error': $error,
-    'css': 'codemirror/lib/codemirror.css',
-    'scripts': ('codemirror/lib/codemirror.js', 'codemirror/mode/xml/xml.js')
-  },
+  html:wrap(map { 'header': $dba:CAT, 'info': $info, 'error': $error },
     <tr>{
       <td>
-        <form action='{ $dba:CAT }' method='post' class='update'>
+        <form method='post'>
         <h2>Jobs</h2>
         {
           let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
@@ -72,17 +69,18 @@ function dba:jobs(
               'user': $details/@user,
               'you': if($id = $curr) then '✓' else '–',
               'time': $time,
-              'start': $start ?: $time
+              'start': $start otherwise $time
             }
-          let $buttons := if ($admin) then (
-            html:button('job-remove', 'Remove', true())
+          let $buttons := if $(admin) then (
+            html:button('job-remove', 'Remove', ('CHECK', 'CONFIRM'))
           ) else ()
           let $options := map { 'sort': $sort, 'presort': 'duration' }
           return html:table($headers, $entries, $buttons, map { }, $options) update {
             (: replace job ids with links :)
-            for $tr at $p in tr[not(th)]
-            for $entries in $entries[$p][?you = '–']
-            let $text := $tr/td[1]/text()
+            for $tr in tr[not(th)]
+            for $text in $tr/td[1]/text()
+            for $id in data($tr/@id)
+            for $entries in $entries[?id = $id][?you = '–']
             return replace node $text with <a href='?job={ $entries?id }'>{ $text }</a>
           }
         }
@@ -95,11 +93,11 @@ function dba:jobs(
         return (
           <td class='vertical'/>,
           <td>
-            <form action='jobs' method='post' id='jobs'>{
+            <form method='post'>{
               <input type='hidden' name='id' value='{ $job }'/>,
               <h2>{
                 'Job: ', $job, '&#xa0;',
-                if($details) then html:button('job-remove', 'Remove', false())
+                if($details) then html:button('job-remove', 'Remove')
               }</h2>,
 
               if($details) then (
@@ -108,7 +106,7 @@ function dba:jobs(
                   for $value in $details/@*
                   for $name in name($value)[. != 'id']
                   return <tr>
-                    <td><b>{ util:capitalize($name) }</b></td>
+                    <td><b>{ utils:capitalize($name) }</b></td>
                     <td>{ string($value) }</td>
                   </tr>
                 }</table>,
@@ -118,11 +116,11 @@ function dba:jobs(
                 return (
                   <h3>Query Bindings</h3>,
                   <table>{
-                    map:for-each($bindings, function($key, $value) {
+                    map:for-each($bindings, fn($key, $value) {
                       <tr>
-                        <td><b>{ $key ?? '$' || $key !! 'Context' }</b></td>
+                        <td><b>{ if($key) then '$' || $key else 'Context' }</b></td>
                         <td><code>{
-                          util:chop(serialize($value, map { 'method': 'basex' }), 1000)
+                          utils:chop(serialize($value, map { 'method': 'basex' }), 1000)
                         }</code></td>
                       </tr>
                     })
@@ -130,18 +128,13 @@ function dba:jobs(
                   </table>
                 ),
   
-                <h3>Query</h3>,
-                <textarea readonly='' spellcheck='false' rows='5'>{
-                  string($details)
-                }</textarea>,
-  
                 if($cached) then (
-                  let $result := util:serialize(try {
-                    job:result($job, map { 'keep': true() })
+                  let $result := try {
+                    utils:serialize(job:result($job, map { 'keep': true() }))
                   } catch * {
                     'Stopped at ' || $err:module || ', ' || $err:line-number || '/' ||
-                      $err:column-number || ':' || string:nl() || $err:description
-                  })
+                      $err:column-number || ':' || char('\n') || $err:description
+                  }
                   where $result
                   return (
                     <h3>{
@@ -154,7 +147,12 @@ function dba:jobs(
                     }</textarea>,
                     html:js('loadCodeMirror("xml");')
                   )
-                )
+                ),
+
+                <h3>Job String</h3>,
+                <textarea readonly='' spellcheck='false'>{
+                  string($details)
+                }</textarea>
               ) else (
                 'Job has expired.'
               )
@@ -164,22 +162,4 @@ function dba:jobs(
       ) else()
     }</tr>
   )
-};
-
-(:~
- : Redirects to the specified action.
- : @param  $action  action to perform
- : @param  $ids     ids
- : @return redirection
- :)
-declare
-  %rest:POST
-  %rest:path('/dba/jobs')
-  %rest:query-param('action', '{$action}')
-  %rest:query-param('id',     '{$ids}')
-function dba:jobs-redirect(
-  $action  as xs:string,
-  $ids     as xs:string*
-) as element(rest:response) {
-  web:redirect($action, map { 'id': $ids })
 };

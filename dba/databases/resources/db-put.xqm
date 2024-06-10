@@ -1,12 +1,12 @@
 (:~
  : Put resources.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../../lib/html.xqm';
-import module namespace util = 'dba/util' at '../../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -24,6 +24,7 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/db-put')
   %rest:query-param('name',   '{$name}')
   %rest:query-param('opts',   '{$opts}')
@@ -31,6 +32,7 @@ declare
   %rest:query-param('binary', '{$binary}')
   %rest:query-param('error',  '{$error}')
   %output:method('html')
+  %output:html-version('5')
 function dba:db-put(
   $name    as xs:string,
   $opts    as xs:string*,
@@ -42,11 +44,11 @@ function dba:db-put(
   return html:wrap(map { 'header': ($dba:CAT, $name), 'error': $error },
     <tr>
       <td>
-        <form action='db-put' method='post' enctype='multipart/form-data' autocomplete='off'>
+        <form method='post' enctype='multipart/form-data' autocomplete='off'>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
             html:link($name, $dba:SUB, map { 'name': $name }), ' » ',
-            html:button('db-put', 'Put')
+            html:button('db-put-do', 'Put')
           }</h2>
           <!-- dummy value; prevents reset of options when nothing is selected -->
           <input type='hidden' name='opts' value='x'/>
@@ -74,7 +76,7 @@ function dba:db-put(
                 html:option('intparse', 'Use internal XML parser', $opts),
                 html:option('dtd', 'Parse DTDs and entities', $opts),
                 html:option('stripns', 'Strip namespaces', $opts),
-                html:option('stripws', 'Strip whitespaces', $opts),
+                html:option('stripws', 'Strip whitespace', $opts),
                 html:option('xinclude', 'Use XInclude', $opts)
               }</td>
             </tr>
@@ -97,13 +99,13 @@ function dba:db-put(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/db-put')
+  %rest:path('/dba/db-put-do')
   %rest:form-param('name',   '{$name}')
   %rest:form-param('opts',   '{$opts}')
   %rest:form-param('path',   '{$path}')
   %rest:form-param('file',   '{$file}')
   %rest:form-param('binary', '{$binary}')
-function dba:db-put-post(
+function dba:db-put-do(
   $name    as xs:string,
   $opts    as xs:string*,
   $path    as xs:string,
@@ -124,12 +126,12 @@ function dba:db-put-post(
           ('intparse', 'dtd', 'stripns', 'stripws', 'xinclude') ! map:entry(., $opts = .))
         )
       ),
-      util:redirect($dba:SUB,
-        map { 'name': $name, 'path': $path, 'info': 'Resource was put.' }
+      utils:redirect($dba:SUB,
+        map { 'name': $name, 'path': $path, 'info': 'Resource was added or updated.' }
       )
     )
   } catch * {
-    util:redirect('db-put', map {
+    utils:redirect('db-put', map {
       'name': $name, 'opts': $opts, 'path': $path, 'binary': $binary, 'error': $err:description
     })
   }

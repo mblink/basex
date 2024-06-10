@@ -1,12 +1,12 @@
 (:~
  : Copy database.
  :
- : @author Christian Grün, BaseX Team 2005-23, BSD License
+ : @author Christian Grün, BaseX Team 2005-24, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 import module namespace html = 'dba/html' at '../lib/html.xqm';
-import module namespace util = 'dba/util' at '../lib/util.xqm';
+import module namespace utils = 'dba/utils' at '../lib/utils.xqm';
 
 (:~ Top category :)
 declare variable $dba:CAT := 'databases';
@@ -22,11 +22,13 @@ declare variable $dba:SUB := 'database';
  :)
 declare
   %rest:GET
+  %rest:POST
   %rest:path('/dba/db-copy')
   %rest:query-param('name',    '{$name}')
   %rest:query-param('newname', '{$newname}')
   %rest:query-param('error',   '{$error}')
   %output:method('html')
+  %output:html-version('5')
 function dba:db-copy(
   $name     as xs:string,
   $newname  as xs:string?,
@@ -35,19 +37,19 @@ function dba:db-copy(
   html:wrap(map { 'header': ($dba:CAT, $name), 'error': $error },
     <tr>
       <td>
-        <form action='db-copy' method='post' autocomplete='off'>
+        <form method='post' autocomplete='off'>
           <input type='hidden' name='name' value='{ $name }'/>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
             html:link($name, $dba:SUB, map { 'name': $name }), ' » ',
-            html:button('db-copy', 'Copy')
+            html:button('db-copy-do', 'Copy')
           }</h2>
           <table>
             <tr>
               <td>New name:</td>
               <td>
-                <input type='text' name='newname' value='{ head(($newname, $name)) }' id='newname'/>
-                { html:focus('newname') }
+                <input type='text' name='newname' value='{ $newname otherwise $name }'
+                  autofocus='autofocus'/>
                 <div class='small'/>
               </td>
             </tr>
@@ -67,10 +69,10 @@ function dba:db-copy(
 declare
   %updating
   %rest:POST
-  %rest:path('/dba/db-copy')
+  %rest:path('/dba/db-copy-do')
   %rest:query-param('name',    '{$name}')
   %rest:query-param('newname', '{$newname}')
-function dba:db-copy(
+function dba:db-copy-do(
   $name     as xs:string,
   $newname  as xs:string
 ) as empty-sequence() {
@@ -80,8 +82,8 @@ function dba:db-copy(
     ) else (
       db:copy($name, $newname)
     ),
-    util:redirect($dba:SUB, map { 'name': $newname, 'info': 'Database was copied.' })
+    utils:redirect($dba:SUB, map { 'name': $newname, 'info': 'Database was copied.' })
   } catch * {
-    util:redirect('db-copy', map { 'name': $name, 'newname': $newname, 'error': $err:description })
+    utils:redirect('db-copy', map { 'name': $name, 'newname': $newname, 'error': $err:description })
   }
 };
