@@ -71,7 +71,7 @@ function dba:jobs(
               'time': $time,
               'start': $start otherwise $time
             }
-          let $buttons := if $(admin) then (
+          let $buttons := if ($admin) then (
             html:button('job-remove', 'Remove', ('CHECK', 'CONFIRM'))
           ) else ()
           let $options := map { 'sort': $sort, 'presort': 'duration' }
