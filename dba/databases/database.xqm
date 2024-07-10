@@ -47,28 +47,28 @@ function dba:database(
 
   let $admin := user:list-details(session:get($config:SESSION-KEY))/@permission = 'admin'
   let $db-exists := db:exists($name)
-  return html:wrap(map { 'header': ($dba:CAT, $name), 'info': $info, 'error': $error },
+  return html:wrap({ 'header': ($dba:CAT, $name), 'info': $info, 'error': $error },
     <tr>{
       <td>
         <form method='post'>
           <input type='hidden' name='name' value='{ $name }' id='name'/>
           <h2>{
             html:link('Databases', $dba:CAT), ' » ',
-            $name ! (if(empty($resource)) then . else html:link(., $dba:SUB, map { 'name': . } ))
+            $name ! (if(empty($resource)) then . else html:link(., $dba:SUB, { 'name': . } ))
           }</h2>
           {
             if($db-exists) then (
               let $headers := (
-                map { 'key': 'resource' , 'label': 'Name' },
-                map { 'key': 'type' , 'label': 'Type' },
-                map { 'key': 'binary' , 'label': 'Binary' },
-                map { 'key': 'size' , 'label': 'Size', 'type': 'number', 'order': 'desc' }
+                { 'key': 'resource' , 'label': 'Name' },
+                { 'key': 'type' , 'label': 'Type' },
+                { 'key': 'binary' , 'label': 'Binary' },
+                { 'key': 'size' , 'label': 'Size', 'type': 'number', 'order': 'desc' }
               )
               let $entries :=
                 let $start := utils:start($page, $sort)
                 let $end := utils:end($page, $sort)
                 for $res in db:list-details($name)[position() = $start to $end]
-                return map {
+                return {
                   'resource': $res,
                   'type': $res/@type,
                   'binary': if($res/@raw = 'true') then '✓' else '–',
@@ -81,8 +81,8 @@ function dba:database(
                 html:button('db-alter', 'Rename…'),
                 html:button('db-optimize', 'Optimize…')
               ) else ()
-              let $params := map { 'name': $name }
-              let $options := map {
+              let $params := { 'name': $name }
+              let $options := {
                 'sort': $sort,
                 'link': $dba:SUB,
                 'page': $page,
@@ -101,15 +101,15 @@ function dba:database(
             <h2>Backups</h2>
             {
               let $headers := (
-                map { 'key': 'backup', 'label': 'Name', 'order': 'desc' },
-                map { 'key': 'size', 'label': 'Size', 'type': 'bytes' },
-                map { 'key': 'comment', 'label': 'Comment' },
-                map { 'key': 'action', 'label': 'Action', 'type': 'dynamic' }
+                { 'key': 'backup', 'label': 'Name', 'order': 'desc' },
+                { 'key': 'size', 'label': 'Size', 'type': 'bytes' },
+                { 'key': 'comment', 'label': 'Comment' },
+                { 'key': 'action', 'label': 'Action', 'type': 'dynamic' }
               )
               let $entries :=
                 for $backup in db:backups($name)
                 order by $backup descending
-                return map {
+                return {
                   'backup': substring-after($backup, $name || '-'),
                   'size': $backup/@size,
                   'comment': $backup/@comment,
@@ -121,11 +121,11 @@ function dba:database(
                 html:button('backup-create', 'Create…') update {
                   if($db-exists) then () else insert node attribute disabled { '' } into .
                 },
-                html:button('backup-restore', 'Restore', ('check', 'CONFIRM')),
-                html:button('backup-drop', 'Drop', ('check', 'CONFIRM'))
+                html:button('backup-restore', 'Restore', ('CHECK', 'CONFIRM')),
+                html:button('backup-drop', 'Drop', ('CHECK', 'CONFIRM'))
               ) else ()
-              let $params := map { 'name': $name }
-              return html:table($headers, $entries, $buttons, $params, map { })
+              let $params := { 'name': $name }
+              return html:table($headers, $entries, $buttons, $params)
             }
           </form>
         </td>
