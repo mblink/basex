@@ -36,6 +36,7 @@ declare %private function dba:read-only-ok() as xs:boolean {
     else if ($path = '/dba/log' and $method = 'POST') then (true())
     else if ($path = '/dba/logs' and $method = 'GET') then (true())
     else if ($path = '/dba/log-download' and $method = 'POST') then (true())
+    else if ($path = '/dba/logs-jump' and $method = 'GET') then (true())
     else (false())
   )
 };
