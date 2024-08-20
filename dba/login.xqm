@@ -29,6 +29,7 @@ declare %private function dba:read-only-ok() as xs:boolean {
     (: Saved queries :)
     else if ($path = '/dba/editor-open' and $method = 'POST') then (true())
     else if ($path = '/dba/editor-save' and $method = 'POST') then (true())
+    else if ($path = '/dba/editor-close' and $method = 'POST') then (true())
     (: Jobs routes :)
     else if ($path = '/dba/jobs' and $method = 'GET') then (true())
     (: Logs routes :)
