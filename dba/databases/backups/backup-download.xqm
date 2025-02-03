@@ -1,12 +1,12 @@
 (:~
- : Download resources.
+ : Download backups.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/databases';
 
 (:~
- : Downloads a database backup.
+ : Downloads a backup.
  : @param  $backup  name of backup file (ignored by the server)
  : @return binary data
  :)

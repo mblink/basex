@@ -1,7 +1,7 @@
 (:~
  : Delete files.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/files';
 
@@ -19,7 +19,7 @@ declare variable $dba:CAT := 'files';
 declare
   %rest:POST
   %rest:path('/dba/file-delete')
-  %rest:query-param('name', '{$names}')
+  %rest:form-param('name', '{$names}')
 function dba:file-delete(
   $names  as xs:string*
 ) as element(rest:response) {

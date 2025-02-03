@@ -1,7 +1,7 @@
 (:~
  : Delete log files.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/logs';
 
@@ -18,7 +18,7 @@ declare variable $dba:CAT := 'logs';
 declare
   %rest:POST
   %rest:path('/dba/logs-delete')
-  %rest:query-param('name', '{$names}')
+  %rest:form-param('name', '{$names}')
 function dba:logs-delete(
   $names  as xs:string*
 ) as element(rest:response) {

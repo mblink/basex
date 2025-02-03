@@ -1,7 +1,7 @@
 (:~
  : Code for logging in and out.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/login';
 
@@ -45,7 +45,7 @@ declare %private function dba:read-only-ok() as xs:boolean {
  : Permissions: checks the user credentials.
  : Redirects to the login page if a user is not logged in, or if the page is not public.
  : @param  $perm  permission data
- : @return redirection to login page or empty sequence
+ : @return redirection to login page if check was not successful
  :)
 declare
   %perm:check('/dba', '{$perm}')
@@ -56,20 +56,20 @@ function dba:check(
   let $allow := $perm?allow
   let $user := session:get($config:SESSION-KEY)
   let $user-perm := if ($user) then (user:list-details($user)/@permission) else ()
-  return if($allow = 'public') then (
+  return if ($allow = 'public') then {
     (: public function, register id for better log entries :)
     request:set-attribute('id', $allow)
-  ) else if ($user) then (
+  } else if ($user) then {
     if ($user-perm = 'admin') then ()
     else if (not(empty($user)) and dba:read-only-ok()) then ()
     else (web:error(403, 'This action can only be performed by an admin'))
-  ) else (
+  } else {
     (: normalize login path :)
-    let $target := if(ends-with($path, '/dba')) then 'dba/login' else 'login'
+    let $target := if (ends-with($path, '/dba')) then 'dba/login' else 'login'
     (: last visited page to redirect to (if there was one) :)
     let $page := replace($path, '^.*dba/?', '')[.]
     return web:redirect($target, html:parameters({ 'page': $page }))
-  )
+  }
 };
 
 (:~
@@ -80,6 +80,7 @@ function dba:check(
  : @return login page or redirection to main page
  :)
 declare
+  %rest:GET
   %rest:path('/dba/login')
   %rest:query-param('_name',  '{$name}')
   %rest:query-param('_error', '{$error}')
@@ -93,9 +94,9 @@ function dba:login(
   $page   as xs:string?
 ) as element() {
   (: user is already logged in: redirect to main page :)
-  if(session:get($config:SESSION-KEY)) then web:redirect('/dba') else
-
-  html:wrap({ 'error': $error },
+  if (session:get($config:SESSION-KEY)) {
+    web:redirect('/dba')
+  } else {
     <tr>
       <td>
         <form method='post'>
@@ -110,7 +111,7 @@ function dba:login(
             <tr>
               <td><b>Name:</b></td>
               <td>
-                <input type='text' name='_name' value='{ $name }' autofocus='autofocus'/>
+                <input type='text' name='_name' value='{ $name }' autofocus=''/>
               </td>
             </tr>
             <tr>
@@ -118,18 +119,19 @@ function dba:login(
               <td>{
                 <input type='password' name='_pass'/>,
                 ' ',
-                html:button('login-check', 'Login')
+                html:button('login', 'Login')
               }</td>
             </tr>
           </table>
         </form>
       </td>
     </tr>
-  )
+    => html:wrap({ 'error': $error })
+  }
 };
 
 (:~
- : Checks the user input and redirects to the main page, or back to the login page.
+ : Checks the user input and redirects to the main page or back to the login page.
  : @param  $name  username
  : @param  $pass  password
  : @param  $page  page to redirect to (optional)
@@ -137,10 +139,10 @@ function dba:login(
  :)
 declare
   %rest:POST
-  %rest:path('/dba/login-check')
-  %rest:query-param('_name', '{$name}')
-  %rest:query-param('_pass', '{$pass}')
-  %rest:query-param('_page', '{$page}')
+  %rest:path('/dba/login')
+  %rest:form-param('_name', '{$name}')
+  %rest:form-param('_pass', '{$pass}')
+  %rest:form-param('_page', '{$page}')
   %perm:allow('public')
 function dba:login-check(
   $name  as xs:string,
@@ -188,7 +190,7 @@ declare %private function dba:accept(
   admin:write-log('Login: ' || $name, 'DBA'),
 
   (: redirect to supplied page or main page :)
-  web:redirect(if($page) then $page else 'logs', html:parameters())
+  web:redirect($page[.] otherwise 'logs', html:parameters())
 };
 
 (:~

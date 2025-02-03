@@ -1,7 +1,7 @@
 (:~
  : Common RESTXQ access points.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/common';
 
@@ -52,15 +52,14 @@ declare
 function dba:unknown(
   $path  as xs:string
 ) as element(html) {
-  html:wrap(
-    <tr>
-      <td>
-        <h2>Page not found:</h2>
-        <ul>
-          <li>Page: dba/{ $path }</li>
-          <li>Method: { request:method() }</li>
-        </ul>
-      </td>
-    </tr>
-  )
+  <tr>
+    <td>
+      <h2>Page not found:</h2>
+      <ul>
+        <li>Page: dba/{ $path }</li>
+        <li>Method: { request:method() }</li>
+      </ul>
+    </td>
+  </tr>
+  => html:wrap()
 };

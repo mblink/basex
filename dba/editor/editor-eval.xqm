@@ -1,7 +1,7 @@
 (:~
  : Evaluate query.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/editor';
 
@@ -51,6 +51,6 @@ declare
   %output:method('text')
 function dba:update(
   $query  as xs:string?
-) as empty-sequence() {
+) {
   utils:update(string($query))
 };

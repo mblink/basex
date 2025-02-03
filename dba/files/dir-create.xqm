@@ -1,7 +1,7 @@
 (:~
  : Create directory.
  :
- : @author Christian Grün, BaseX Team 2005-24, BSD License
+ : @author Christian Grün, BaseX Team, BSD License
  :)
 module namespace dba = 'dba/files';
 
@@ -18,7 +18,7 @@ declare variable $dba:CAT := 'files';
 declare
   %rest:POST
   %rest:path('/dba/dir-create')
-  %rest:query-param('name', '{$name}')
+  %rest:form-param('name', '{$name}')
 function dba:dir-create(
   $name  as xs:string
 ) as element(rest:response) {
